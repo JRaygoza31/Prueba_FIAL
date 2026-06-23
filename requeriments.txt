@@ -1,5 +1,10 @@
 Flask
 Flask-SQLAlchemy
 psycopg2-binary
-twilio
+requests
+pandas
+openpyxl
+reportlab
+PyPDF2
+PyMuPDF
 gunicorn
