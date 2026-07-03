@@ -7,8 +7,4 @@ openpyxl
 reportlab
 PyPDF2
 PyMuPDF
-<<<<<<< HEAD
 gunicorn
-=======
-gunicorn
->>>>>>> eeba7a75af35139019f33a08138366f400a2a44a
