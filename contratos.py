@@ -129,21 +129,33 @@ def generar_pdf(evento):
         fecha_larga
     )
 
-
-    # =====================================================
+# =====================================================
 # FECHA DEL CONTRATO
 # =====================================================
 
     hoy = datetime.now()
 
-    mes_hoy = MESES_ES[
-        hoy.strftime("%B")
-    ]
+    MESES = {
+        1:"ENE",
+        2:"FEB",
+        3:"MAR",
+        4:"ABR",
+        5:"MAY",
+        6:"JUN",
+        7:"JUL",
+        8:"AGO",
+        9:"SEP",
+        10:"OCT",
+        11:"NOV",
+        12:"DIC"
+    }
+
+    hoy = datetime.now()
 
     fecha_contrato = (
-        f"{hoy.day}  "
-        f"{mes_hoy}  "
-        f"{hoy.year}"
+        f" {hoy.day:02d} "
+        f"      {MESES[hoy.month]} "
+        f"     {hoy.year}"
     )
 
     can.setFont(
@@ -152,7 +164,7 @@ def generar_pdf(evento):
 
     can.drawString(
         422,   # Cambia por la coordenada X
-        742,   # Cambia por la coordenada Y
+        744,   # Cambia por la coordenada Y
         fecha_contrato
     )
 
@@ -383,10 +395,19 @@ def convertir_pdf_a_png(pdf_bytes):
 
     return png_bytes
 
-def enviar_whatsapp_documento(numero, url_documento, nombre_archivo, mensaje):
 
-    print("================================")
-    print("ENVIANDO DOCUMENTO A:", numero)
+def enviar_plantilla_contrato_fial(
+    numero,
+    url_pdf,
+    nombre_pdf,
+    nombre_cliente,
+    telefono,
+    nombre_festejado,
+    fecha_evento,
+    tipo_fiesta,
+    paquete,
+    municipio
+):
 
     url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
@@ -398,11 +419,66 @@ def enviar_whatsapp_documento(numero, url_documento, nombre_archivo, mensaje):
     data = {
         "messaging_product": "whatsapp",
         "to": numero,
-        "type": "document",
-        "document": {
-            "link": url_documento,
-            "filename": nombre_archivo,
-            "caption": mensaje
+        "type": "template",
+        "template": {
+            "name": "envio_contrato_fial",
+            "language": {
+                "code": "es_MX"
+            },
+            "components": [
+                {
+                    "type": "header",
+                    "parameters": [
+                        {
+                            "type": "document",
+                            "document": {
+                                "link": url_pdf,
+                                "filename": nombre_pdf
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_cliente",
+                            "text": nombre_cliente
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "telefono",
+                            "text": telefono
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_festejado",
+                            "text": nombre_festejado
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "fecha_evento",
+                            "text": fecha_evento.strftime("%d/%m/%Y")
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "tipo_fiesta",
+                            "text": tipo_fiesta
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "paquete",
+                            "text": paquete
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "municipio",
+                            "text": municipio
+                        }
+                    ]
+                }
+            ]
         }
     }
 
@@ -412,11 +488,18 @@ def enviar_whatsapp_documento(numero, url_documento, nombre_archivo, mensaje):
         json=data
     )
 
+    print("================================")
+    print("ENVIANDO CONTRATO FIAL A:", numero)
     print("STATUS:", respuesta.status_code)
     print("RESPUESTA:", respuesta.text)
     print("================================")
 
     return respuesta.status_code == 200
+
+
+
+
+
 
 def enviar_plantilla_contrato_cliente(
     numero,
@@ -636,9 +719,18 @@ button:hover{
 
     </select>
 
+
+
     <button type="submit">
-        Generar Contrato
-    </button>
+    Generar y Enviar Contrato
+</button>
+
+    <a
+        href="/"
+        class="btn-inicio"
+    >
+        🏠 Volver al inicio
+</a>
 
 </form>
 
@@ -757,11 +849,17 @@ No existe el folio {folio_cliente}
                 evento.tipo_fiesta
             )
 
-            envio_admin = enviar_whatsapp_documento(
+            envio_admin = enviar_plantilla_contrato_fial(
                 ADMIN_WHATSAPP,
                 url_pdf,
                 nombre_pdf,
-                mensaje_admin
+                evento.nombre,
+                evento.telefono,
+                evento.nombre_festejado,
+                evento.fecha_evento,
+                evento.tipo_fiesta,
+                evento.paquete,
+                evento.municipio
             )
 
             # =============================================

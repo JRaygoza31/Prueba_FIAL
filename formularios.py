@@ -51,6 +51,8 @@ def enviar_whatsapp_plantilla_confirmacion(
     fecha_evento,
     nombre_festejado
 ):
+        
+
 
     url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
@@ -114,34 +116,90 @@ def enviar_whatsapp_plantilla_confirmacion(
 
 
 
+ADMIN_WHATSAPP = "5218119061808"
 
 
-@formularios_bp.route("/prueba_template")
-def prueba_template():
+def enviar_whatsapp_plantilla_confirmacion_fial(
+    numero,
+    nombre_cliente,
+    telefono,
+    nombre_festejado,
+    fecha_evento,
+    tipo_fiesta,
+    paquete,
+    municipio
+):
 
-    exito = enviar_whatsapp_plantilla_confirmacion(
+    url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
-        "5213113963847",
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
 
-        "José",
+    data = {
+        "messaging_product": "whatsapp",
+        "to": numero,
+        "type": "template",
+        "template": {
+            "name": "confirmacion_formulario_fial",
+            "language": {
+                "code": "es_MX"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_cliente",
+                            "text": nombre_cliente
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "telefono",
+                            "text": telefono
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_festejado",
+                            "text": nombre_festejado
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "fecha_evento",
+                            "text": fecha_evento.strftime("%d/%m/%Y")
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "tipo_fiesta",
+                            "text": tipo_fiesta
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "paquete",
+                            "text": paquete
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "municipio",
+                            "text": municipio
+                        }
+                    ]
+                }
+            ]
+        }
+    }
 
-        "Cumpleaños",
+    respuesta = requests.post(url, headers=headers, json=data)
 
-        datetime(2026, 7, 20),
+    print("================================")
+    print("ENVIANDO CONFIRMACIÓN FIAL A:", numero)
+    print("STATUS:", respuesta.status_code)
+    print("RESPUESTA:", respuesta.text)
+    print("================================")
 
-        "Pedrito"
-
-    )
-
-    if exito:
-        return "✅ Plantilla enviada"
-
-    return "❌ Error al enviar"
-
-
-
-
-
+    return respuesta.status_code == 200
 
 
 
@@ -638,24 +696,8 @@ y pelota gigante
         db.session.commit()
 
         # =====================================================
-        # MENSAJE CLIENTE
+        # ENVIAR CONFIRMACIÓN AL CLIENTE
         # =====================================================
-
-        mensaje_cliente = f'''
-🎉 Hola {nombre}
-
-Tu evento ha sido registrado correctamente.
-
-📅 Fecha: {fecha_evento}
-
-🎈 Festejado: {nombre_festejado}
-
-🎭 Paquete: {paquete}
-
-📍 Municipio: {municipio}
-
-Gracias por confiar en nosotros.
-'''
 
         enviar_whatsapp_plantilla_confirmacion(
             "52" + telefono,
@@ -666,28 +708,20 @@ Gracias por confiar en nosotros.
         )
 
         # =====================================================
-        # MENSAJE ADMIN
+        # ENVIAR CONFIRMACIÓN A FIAL
         # =====================================================
 
-        mensaje_admin = f'''
-🚨 NUEVO EVENTO
-
-👤 Cliente: {nombre}
-
-📞 Teléfono: {telefono}
-
-📅 Fecha: {fecha_evento}
-
-🎉 Fiesta: {tipo_fiesta}
-
-🎭 Paquete: {paquete}
-'''
-
-        ##enviar_whatsapp(
-        #"528119061808",
-        #mensaje_admin
-    #)
-
+        enviar_whatsapp_plantilla_confirmacion_fial(
+            ADMIN_WHATSAPP,
+            nombre,
+            telefono,
+            nombre_festejado,
+            fecha_evento,
+            tipo_fiesta,
+            paquete,
+            municipio
+        )
+        
         return render_template_string("""
 <!DOCTYPE html>
 <html lang="es">

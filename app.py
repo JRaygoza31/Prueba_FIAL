@@ -833,23 +833,6 @@ def proteger_rutas():
         return redirect("/login")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route("/")
 def home():
 
