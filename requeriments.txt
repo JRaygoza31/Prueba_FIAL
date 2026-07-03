@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Flask==3.1.1
 Flask-SQLAlchemy==3.1.1
 psycopg2-binary==2.9.10
@@ -8,3 +9,15 @@ reportlab==4.4.2
 PyPDF2==3.0.1
 PyMuPDF==1.26.1
 gunicorn==23.0.0
+=======
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+requests
+pandas
+openpyxl
+reportlab
+PyPDF2
+PyMuPDF
+gunicorn
+>>>>>>> 8e87204934e2b43e005999ed915377cdb6f774b3
