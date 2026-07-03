@@ -44,11 +44,13 @@ PHONE_NUMBER_ID = "1146952391836103"
 # =========================================================
 # FUNCION ENVIAR WHATSAPP
 # =========================================================
-
-def enviar_whatsapp(numero, mensaje):
-
-    print("================================")
-    print("ENVIANDO A:", numero)
+def enviar_whatsapp_plantilla_confirmacion(
+    numero,
+    nombre_cliente,
+    tipo_fiesta,
+    fecha_evento,
+    nombre_festejado
+):
 
     url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
 
@@ -60,9 +62,39 @@ def enviar_whatsapp(numero, mensaje):
     data = {
         "messaging_product": "whatsapp",
         "to": numero,
-        "type": "text",
-        "text": {
-            "body": mensaje
+        "type": "template",
+        "template": {
+            "name": "confirmacion_formulario",
+            "language": {
+                "code": "es_MX"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_cliente",
+                            "text": nombre_cliente
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "tipo_fiesta",
+                            "text": tipo_fiesta
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "fecha_evento",
+                            "text": fecha_evento.strftime("%d/%m/%Y")
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_festejado",
+                            "text": nombre_festejado
+                        }
+                    ]
+                }
+            ]
         }
     }
 
@@ -72,20 +104,47 @@ def enviar_whatsapp(numero, mensaje):
         json=data
     )
 
+    print("================================")
+    print("ENVIANDO PLANTILLA A:", numero)
     print("STATUS:", respuesta.status_code)
     print("RESPUESTA:", respuesta.text)
     print("================================")
 
-@formularios_bp.route("/prueba")
-def prueba():
+    return respuesta.status_code == 200
 
-    enviar_whatsapp(
-        "5213113963847",  # tu número personal
-        "✅ Prueba desde Flask + WhatsApp Cloud API"
+
+
+
+
+@formularios_bp.route("/prueba_template")
+def prueba_template():
+
+    exito = enviar_whatsapp_plantilla_confirmacion(
+
+        "5213113963847",
+
+        "José",
+
+        "Cumpleaños",
+
+        datetime(2026, 7, 20),
+
+        "Pedrito"
+
     )
 
-    return "Mensaje enviado"
-    return "Enviado"
+    if exito:
+        return "✅ Plantilla enviada"
+
+    return "❌ Error al enviar"
+
+
+
+
+
+
+
+
 
 # =========================================================
 # MENU FORMULARIOS
@@ -341,55 +400,138 @@ telas y pelota gigante
 
         paquetes = {
 
-            "Entrega de regalo": """
-⭐ Personaje realiza entrega
-⭐ Sesión rápida
+        "Entrega de regalo": """
+⭐ Personaje asiste al domicilio
+⭐ Realiza entrega
 
 ⏰ 10-15 minutos
 
 🔊 Sin producción
 """,
 
-            "Convivencia": """
-⭐ Interacción con invitados
-⭐ Pastel y fotos
+        "Convivencia": """
+⭐ Personaje acompañado de un dirigente
+⭐ Momento del pastel
+⭐ Interacción con festejado
+⭐ Tiempo de fotos
 
 ⏰ 20 minutos
 
-🔊 Mini audio ambiental
+🎈 Mini audio (ambientación y mañanitas)
 """,
 
-            "Recepción": """
+        "Recepción": """
 ⭐ Personaje recibe invitados
+⭐ Actividad básica
 
 ⏰ 40 minutos
 
 🔊 Sin producción
 """,
 
-            "Mini Show": """
+        "Mini Show": """
 ⭐ Presentación
 ⭐ Musical
 ⭐ Concurso
-⭐ Pastel
+⭐ Momento pastel
 ⭐ Baile
+⭐ Entrega de premios
 
 ⏰ 30 minutos
 
-🎈 Audio, humo y globos
+🎈 Audio, humo, burbujas y globos
 """,
 
-            "Espectáculo": """
-⭐ Show completo
-⭐ Carnaval
-⭐ Concursos
+        "Animación Básica": """
+⭐ Presentación
+⭐ Musical
+⭐ Concurso
+⭐ Momento pastel
 ⭐ Interacciones
+⭐ Baile
+⭐ Entrega de premios
+
+⏰ 30 minutos
+
+🎈 Audio, humo, burbujas,
+papelitos, globos,
+telas y pelota gigante
+""",
+
+        "Show Completo con Animador": """
+⭐ Presentación
+⭐ Musical
+⭐ Concurso
+⭐ Carnaval
+⭐ Momento pastel
+⭐ Interacciones
+⭐ Baile
+⭐ Entrega de premios
+
+⏰ 40 minutos
+
+🎈 Audio, humo, burbujas,
+papelitos, globos,
+carnaval, telas
+y pelota gigante
+""",
+
+        "Show Completo con Alex": """
+⭐ Presentación
+⭐ Musical
+⭐ Concurso
+⭐ Carnaval
+⭐ Momento pastel
+⭐ Interacciones
+⭐ Baile
+⭐ Entrega de premios
+
+⏰ 40 minutos
+
+🎈 Audio, humo, burbujas,
+papelitos, globos,
+zanquero, telas
+y pelota gigante
+""",
+
+        "Espectáculo con Animador": """
+⭐ Presentación
+⭐ Cuento o temática
+⭐ Musical
+⭐ Concurso
+⭐ Carnaval
+⭐ Momento pastel
+⭐ Interacciones
+⭐ Baile
+⭐ Entrega de premios
 
 ⏰ 50 minutos
 
-🎈 Producción completa
+🎈 Audio, humo, burbujas,
+papelitos, globos,
+carnaval, telas
+y pelota gigante
+""",
+
+        "Espectáculo con Alex": """
+⭐ Presentación
+⭐ Cuento o temática
+⭐ Musical
+⭐ Concurso
+⭐ Carnaval
+⭐ Momento pastel
+⭐ Interacciones
+⭐ Baile
+⭐ Entrega de premios
+
+⏰ 50 minutos
+
+🎈 Audio, humo, burbujas,
+papelitos, globos,
+zanquero, telas
+y pelota gigante
 """
-        }
+    }
 
     # =====================================================
     # GUARDAR FORMULARIO
@@ -415,8 +557,6 @@ telas y pelota gigante
 
         horario_show = request.form["horario_show"]
 
-        total_horas = request.form["total_horas"]
-
         horario_evento = request.form["horario_evento"]
 
         nombre_festejado = request.form["nombre_festejado"]
@@ -426,6 +566,7 @@ telas y pelota gigante
         numero_personajes=request.form["numero_personajes"]
         personajes=request.form["personajes"]
         paquete = request.form["paquete"]
+        descripcion_paquete = request.form["descripcion_paquete"]
         
         anticipo=float(request.form["anticipo"])
         fecha_anticipo=request.form["fecha_anticipo"]
@@ -473,7 +614,7 @@ telas y pelota gigante
             telefono=telefono,
             telefono_secundario=telefono_secundario,
             horario_show=horario_show,
-            total_horas=total_horas,
+            total_horas='',
             horario_evento=horario_evento,
             nombre_festejado=nombre_festejado,
             tipo_fiesta=tipo_fiesta,
@@ -481,6 +622,7 @@ telas y pelota gigante
             numero_personajes=numero_personajes,
             personajes=personajes,
             paquete=paquete,
+            descripcion_paquete=descripcion_paquete,
             anticipo=anticipo,
             fecha_anticipo=fecha_anticipo if fecha_anticipo else None,
             imagen_anticipo=ruta_imagen,
@@ -515,9 +657,12 @@ Tu evento ha sido registrado correctamente.
 Gracias por confiar en nosotros.
 '''
 
-        enviar_whatsapp(
+        enviar_whatsapp_plantilla_confirmacion(
             "52" + telefono,
-            mensaje_cliente
+            nombre,
+            tipo_fiesta,
+            fecha_evento,
+            nombre_festejado
         )
 
         # =====================================================
@@ -538,10 +683,10 @@ Gracias por confiar en nosotros.
 🎭 Paquete: {paquete}
 '''
 
-        enviar_whatsapp(
-        "528119061808",
-        mensaje_admin
-    )
+        ##enviar_whatsapp(
+        #"528119061808",
+        #mensaje_admin
+    #)
 
         return render_template_string("""
 <!DOCTYPE html>
@@ -651,7 +796,6 @@ window.onload = iniciarCuenta;
 
         <b>Horario:</b> {{inicio}} - {{fin}}<br>
 
-        <b>Total horas:</b> {{total_horas}}
 
     </div>
 
@@ -675,7 +819,6 @@ fecha=fecha_evento,
 municipio=municipio,
 paquete=paquete,
 horario_show=horario_show,
-total_horas=total_horas
 )
 
 # =====================================================
@@ -1027,23 +1170,6 @@ required
 
 </div>
 
-<!-- DURACION -->
-
-<div>
-
-<label>
-Duración del show
-</label>
-
-<input
-type="text"
-name="total_horas"
-placeholder="Ej: 2 horas"
-required
->
-
-</div>
-
 <!-- ================================= -->
 <!-- HORA DEL EVENTO -->
 <!-- ================================= -->
@@ -1188,23 +1314,24 @@ required
         </select>
 
     </div>
-
     <!-- ================================= -->
     <!-- DESCRIPCION PAQUETE -->
     <!-- ================================= -->
 
-    <div
-        class="descripcion-paquete"
-        id="descripcion_paquete"
+    <input
+    type="hidden"
+    name="descripcion_paquete"
+    id="descripcion_paquete_input"
     >
 
-Selecciona un paquete para ver la descripción 🎉
-
+    <div
+    class="descripcion-paquete"
+    id="descripcion_paquete"
+    >
+    Selecciona un paquete para ver la descripción 🎉
     </div>
-    
-    
-    
-    
+
+
     
 
     <!-- ================================= -->
@@ -1333,14 +1460,19 @@ const descripcion = document.getElementById(
     "descripcion_paquete"
 )
 
+const descripcionInput = document.getElementById(
+    "descripcion_paquete_input"
+)
+
 const paquetes = {{ paquetes | tojson | safe }};
 
 paquete.addEventListener(
     "change",
     () => {
 
-        descripcion.innerHTML =
-            paquetes[paquete.value]
+        descripcion.textContent = paquetes[paquete.value];
+
+        descripcionInput.value = paquetes[paquete.value];
 
     }
 )
@@ -1353,4 +1485,6 @@ paquete.addEventListener(
 titulo=titulo,
 paquetes=paquetes
 )
+
+
 

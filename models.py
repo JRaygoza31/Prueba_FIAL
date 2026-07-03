@@ -27,8 +27,8 @@ class Evento(db.Model):
     tipo_fiesta=db.Column(db.String(100),nullable=False)
 
     tematica=db.Column(db.String(150))
-
     paquete=db.Column(db.String(100),nullable=False)
+    descripcion_paquete = db.Column(db.Text)
     numero_personajes=db.Column(db.Integer,default=1)
     personajes = db.Column(db.String(150),nullable=False)
     costo_total=db.Column(db.Float,nullable=False)
@@ -45,6 +45,21 @@ class Evento(db.Model):
         db.DateTime,
         server_default=db.func.now()
     )
+    # CONTRATO
+
+    contrato_generado = db.Column(db.Boolean, default=False,     nullable=False
+    )
+
+    fecha_contrato = db.Column(
+        db.DateTime
+    )
+
+    contrato_enviado = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+    
 
     def __repr__(self):
         return f"<Evento {self.folio_sistema} - {self.nombre_festejado}>"

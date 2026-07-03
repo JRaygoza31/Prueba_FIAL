@@ -8,11 +8,11 @@ from flask import (
 )
 
 from models import Evento
-
 from io import BytesIO
-
+import requests
+import os
+from models import db, Evento
 from datetime import datetime
-
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -21,6 +21,13 @@ from PyPDF2 import PdfReader, PdfWriter
 
 import fitz
 import unicodedata
+
+
+ACCESS_TOKEN = "EAASe8E2iOG0BRl9q2f7ZAATGaqxpmpw0ZCA1QMEgi2uqHkULz85SY2ZBXIsFJ7q1xzafnPrw9XGKJ7plqN7pHqujKRV8xZBFAGtjKeSlD2zLG120aWIv5M0EyePFLcZCn6O3AMB4iCZCD9kDobOQZATKb0kPBSHfUnOKQ8nXu2khD1tCDoSJJuZAtwvQtT01gxq06QZDZD"
+PHONE_NUMBER_ID = "1146952391836103"
+BASE_URL = "https://prueba-fial-1-8utt.onrender.com"
+ADMIN_WHATSAPP = "528119061808"
+
 
 # =========================================================
 # BLUEPRINT
@@ -93,7 +100,7 @@ def generar_pdf(evento):
 
     can.drawString(
         520,   # mover derecha
-        680,   # subir un poco
+        690,   # subir un poco
         str(evento.folio_cliente or "")
     )
 
@@ -113,50 +120,72 @@ def generar_pdf(evento):
 
     can.setFont(
         "Helvetica-Bold",
-        11
+        12
     )
 
     can.drawString(
         100,
-        635,
+        645,
         fecha_larga
     )
+
+
+    # =====================================================
+# FECHA DEL CONTRATO
+# =====================================================
+
+    hoy = datetime.now()
+
+    mes_hoy = MESES_ES[
+        hoy.strftime("%B")
+    ]
+
+    fecha_contrato = (
+        f"{hoy.day}  "
+        f"{mes_hoy}  "
+        f"{hoy.year}"
+    )
+
+    can.setFont(
+    "Helvetica-Bold",
+    16)
+
+    can.drawString(
+        422,   # Cambia por la coordenada X
+        742,   # Cambia por la coordenada Y
+        fecha_contrato
+    )
+
+
 
     # =====================================================
     # CLIENTE
     # =====================================================
 
+    can.setFont("Helvetica-Bold",12)
+
     can.drawString(
         100,
-        605,
+        615,
         str(evento.nombre or "").upper()
     )
     
-    # =====================================================
-    # DIRECCION
-    # =====================================================
 
-    can.drawString(
-        100,
-        575,
-        str(evento.direccion or "").upper()
-    )
-    
-     # =====================================================
-    # UBICACION
     # =====================================================
+# DIRECCIÓN
+# =====================================================
 
-    ubicacion = (
-        f"{evento.salon} - "
+    direccion = (
+        f"{evento.direccion}, "
+        f"{evento.salon}, "
         f"{evento.municipio}"
     ).upper()
 
     can.drawString(
-        150,
-        575,
-        ubicacion
+        100,
+        585,
+        direccion
     )
-
 
     # =====================================================
     # TELEFONO
@@ -164,8 +193,15 @@ def generar_pdf(evento):
 
     can.drawString(
         100,
-        510,
+        520,
         str(evento.telefono or "")
+    )
+    
+
+    can.drawString(
+        215,
+        520,
+        str(evento.telefono_secundario or "")
     )
     
     # =====================================================
@@ -174,16 +210,15 @@ def generar_pdf(evento):
 
     horario = (
         f"{evento.horario_show} "
-        f"({evento.total_horas})"
     ).upper()
 
     can.drawString(
-        100, 480,
+        100, 487,
         horario
     )
 
     can.drawString(
-        450, 480,
+        450, 487,
         str(evento.horario_evento or "").upper()
     )
     # =====================================================
@@ -191,18 +226,82 @@ def generar_pdf(evento):
     # =====================================================
 
     can.drawString(
-        100, 445,
+        100, 455,
         str(evento.nombre_festejado or "").upper()
     )
 
     # =====================================================
-    # PAQUETE
+    # TEMATICA Y PAQUETE
     # =====================================================
 
     can.drawString(
-        130, 333,
+        140, 410,
+        str(evento.tematica or "").upper()
+    )
+
+    can.drawString(
+        140, 338,
         str(evento.paquete or "").upper()
     )
+    
+    can.drawString(
+        480, 410,
+        str(evento.numero_personajes or "").upper()
+    )
+    
+    can.drawString(
+        140, 375,
+        str(evento.personajes or "").upper()
+    )
+    
+    can.drawString(
+        480, 338,
+        str(evento.total_horas or "").upper()
+    )
+    
+    descripcion = (
+    str(evento.descripcion_paquete or "")
+    .replace("⭐", "")
+    .replace("🎈", "")
+    .replace("🔊", "")
+    .replace("⏰", "")
+)
+
+    items = []
+
+    for linea in descripcion.splitlines():
+
+        texto = linea.strip()
+
+        if (
+            not texto
+            or "MINUTO" in texto.upper()
+            or "HORA" in texto.upper()
+        ):
+            continue
+
+        items.append(texto.upper())
+
+    mitad = (len(items) + 1) // 2
+
+    can.setFont("Helvetica-Bold", 12)
+
+    y_inicial = 290
+    espacio = 12
+
+    for i, texto in enumerate(items[:mitad]):
+        can.drawString(
+            40,
+            y_inicial - i * espacio,
+            "• " + texto
+        )
+
+    for i, texto in enumerate(items[mitad:]):
+        can.drawString(
+            300,
+            y_inicial - i * espacio,
+            "• " + texto
+        )
 
     # =====================================================
     # COMENTARIOS / EXTRAS
@@ -216,9 +315,9 @@ def generar_pdf(evento):
     # COSTO, ANTICIPO Y RESTANTE
     # =====================================================
 
-    can.drawString(425, 158, str(evento.costo_total or ""))
+    can.drawString(435, 158, str(evento.costo_total or ""))
     
-    can.drawString(425, 140, str(evento.anticipo or ""))
+    can.drawString(435, 140, str(evento.anticipo or ""))
     
     can.drawString(445, 105, str(evento.restante or ""))
 
@@ -283,6 +382,119 @@ def convertir_pdf_a_png(pdf_bytes):
     png_bytes.seek(0)
 
     return png_bytes
+
+def enviar_whatsapp_documento(numero, url_documento, nombre_archivo, mensaje):
+
+    print("================================")
+    print("ENVIANDO DOCUMENTO A:", numero)
+
+    url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": numero,
+        "type": "document",
+        "document": {
+            "link": url_documento,
+            "filename": nombre_archivo,
+            "caption": mensaje
+        }
+    }
+
+    respuesta = requests.post(
+        url,
+        headers=headers,
+        json=data
+    )
+
+    print("STATUS:", respuesta.status_code)
+    print("RESPUESTA:", respuesta.text)
+    print("================================")
+
+    return respuesta.status_code == 200
+
+def enviar_plantilla_contrato_cliente(
+    numero,
+    url_pdf,
+    nombre_pdf,
+    nombre_cliente,
+    fecha_evento,
+    tipo_fiesta
+):
+
+    url = f"https://graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "messaging_product": "whatsapp",
+        "to": numero,
+        "type": "template",
+        "template": {
+            "name": "envio_contrato_cliente",
+            "language": {
+                "code": "es_MX"
+            },
+            "components": [
+                {
+                    "type": "header",
+                    "parameters": [
+                        {
+                            "type": "document",
+                            "document": {
+                                "link": url_pdf,
+                                "filename": nombre_pdf
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "parameter_name": "nombre_cliente",
+                            "text": nombre_cliente
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "fecha_evento",
+                            "text": fecha_evento.strftime("%d/%m/%Y")
+                        },
+                        {
+                            "type": "text",
+                            "parameter_name": "tipo_fiesta",
+                            "text": tipo_fiesta
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+    respuesta = requests.post(
+        url,
+        headers=headers,
+        json=data
+    )
+
+    print("================================")
+    print("ENVIANDO CONTRATO A:", numero)
+    print("STATUS:", respuesta.status_code)
+    print("RESPUESTA:", respuesta.text)
+    print("================================")
+
+    return respuesta.status_code == 200
+
+
 
 # =========================================================
 # HTML
@@ -453,6 +665,10 @@ button:hover{
     "/generar_contrato",
     methods=["GET","POST"]
 )
+@generar_contrato_bp.route(
+    "/generar_contrato",
+    methods=["GET", "POST"]
+)
 def generar_contrato():
 
     mensaje = None
@@ -483,17 +699,117 @@ No existe el folio {folio_cliente}
 
             nombre_cliente = quitar_acentos(
                 evento.nombre.upper()
-                .replace(" ","_")
+                .replace(" ", "_")
             )
 
-            nombre_archivo = f"""
-{folio_cliente}_{nombre_cliente}
-""".strip()
+            nombre_archivo_base = (
+                f"{folio_cliente}_{nombre_cliente}"
+            )
+
+            # =============================================
+            # GUARDAR PDF PARA WHATSAPP
+            # =============================================
+
+            carpeta = "static/contratos"
+
+            os.makedirs(
+                carpeta,
+                exist_ok=True
+            )
+
+            nombre_pdf = f"{nombre_archivo_base}.pdf"
+
+            ruta_pdf = f"{carpeta}/{nombre_pdf}"
+
+            with open(ruta_pdf, "wb") as f:
+                f.write(pdf.getbuffer())
+
+            url_pdf = f"{BASE_URL}/{ruta_pdf}"
+            print("URL PDF:", url_pdf)
+
+            # =============================================
+            # ENVIAR CONTRATO POR WHATSAPP
+            # =============================================
+
+            mensaje_cliente = (
+                f"📄 Hola {evento.nombre}, "
+                f"te compartimos tu contrato de evento.\n\n"
+                f"🎉 Festejado: {evento.nombre_festejado}\n"
+                f"📅 Fecha: {evento.fecha_evento}\n\n"
+                f"Por favor revísalo y cualquier duda "
+                f"estamos para ayudarte."
+            )
+
+            mensaje_admin = (
+                f"📄 CONTRATO GENERADO\n\n"
+                f"👤 Cliente: {evento.nombre}\n"
+                f"📱 Teléfono: {evento.telefono}\n"
+                f"🎉 Festejado: {evento.nombre_festejado}\n"
+                f"📅 Fecha: {evento.fecha_evento}"
+            )
+
+            envio_cliente = enviar_plantilla_contrato_cliente(
+                "521" + evento.telefono,
+                url_pdf,
+                nombre_pdf,
+                evento.nombre,
+                evento.fecha_evento,
+                evento.tipo_fiesta
+            )
+
+            envio_admin = enviar_whatsapp_documento(
+                ADMIN_WHATSAPP,
+                url_pdf,
+                nombre_pdf,
+                mensaje_admin
+            )
+
+            # =============================================
+            # MARCAR CONTRATO EN BASE DE DATOS
+            # =============================================
+
+            evento.contrato_generado = True
+
+            evento.fecha_contrato = datetime.now()
+
+            if envio_cliente and envio_admin:
+                evento.contrato_enviado = True
+
+            db.session.commit()
+
+            pdf.seek(0)
 
             # =============================================
             # PDF
             # =============================================
 
+            if formato == "pdf":
+
+                return send_file(
+                    pdf,
+                    as_attachment=True,
+                    download_name=nombre_pdf,
+                    mimetype="application/pdf"
+                )
+
+            # =============================================
+            # PNG
+            # =============================================
+
+            else:
+
+                png = convertir_pdf_a_png(pdf)
+
+                return send_file(
+                    png,
+                    as_attachment=True,
+                    download_name=f"{nombre_archivo_base}.png",
+                    mimetype="image/png"
+                )
+
+  # =============================================
+            # PDF
+            # =============================================
             if formato == "pdf":
 
                 return send_file(
@@ -535,6 +851,74 @@ No existe el folio {folio_cliente}
         mensaje=mensaje
     )
     
+
+
+if __name__ == "__main__":
+
+    from datetime import datetime
+
+    class Demo:
+        pass
+
+    evento = Demo()
+
+    evento.folio_sistema = "C20260001"
+    evento.folio_cliente = "F-00025"
+
+    evento.nombre = "JUAN PEREZ GARCIA"
+    evento.telefono = "8111234567"
+    evento.telefono_secundario = "8187654321"
+
+    evento.fecha_evento = datetime(2026, 8, 15)
+
+    evento.salon = "SALON FANTASIA"
+    evento.municipio = "MONTERREY"
+    evento.direccion = "AV. LINCOLN 1234"
+
+    evento.horario_show = "4:00 PM A 6:00 PM"
+    evento.total_horas = "2 HORAS"
+    evento.horario_evento = "5:00 PM"
+
+    evento.nombre_festejado = "SOFIA"
+    evento.tipo_fiesta = "CUMPLEAÑOS"
+
+    evento.tematica = "PRINCESAS"
+
+    evento.numero_personajes = 2
+    evento.personajes = "ELSA Y ANNA"
+
+    evento.paquete = "ESPECTÁCULO CON ALEX"
+    evento.descripcion_paquete = """
+    ⭐ Presentación
+    ⭐ Musical
+    ⭐ Concurso
+    ⭐ Momento pastel
+    ⭐ Baile
+    ⭐ Entrega de premios
+
+    ⏰ 30 minutos
+
+    🎈 Audio, humo, burbujas y globos
+    """
+
+    evento.costo_total = 6500
+    evento.anticipo = 3000
+    evento.restante = 3500
+
+    evento.extras = "PIÑATA Y MAÑANITAS"
+    evento.observaciones = "LLEGAR 30 MINUTOS ANTES"
+
+    pdf = generar_pdf(evento)
+
+    with open("Contrato_Demo.pdf", "wb") as f:
+        f.write(pdf.getbuffer())
+
+    print("Contrato generado correctamente.")
     
-  
-  
+
+
+
+
+
+
+

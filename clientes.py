@@ -99,12 +99,28 @@ def clientes():
         )
         query = query.filter(search_filter)
 
-    # Ordenamiento dinámico
-    if ordenar_por == "id":
-        query = query.order_by(Evento.id.desc())
+    # =====================================
+# ORDENAMIENTO
+# =====================================
+
+    if ordenar_por == "fecha_evento":
+
+        query = query.order_by(
+            Evento.fecha_evento.asc()
+        )
+
+    elif ordenar_por == "fecha_registro":
+
+        query = query.order_by(
+            Evento.fecha_registro.desc()
+        )
+
     else:
-        # Por defecto ordena por fecha del evento (más próximos primero)
-        query = query.order_by(Evento.fecha_evento.asc())
+
+        # Más recientes creados primero
+        query = query.order_by(
+            Evento.id.desc()
+        )
 
     # Ejecutar consulta
     eventos = query.all()
@@ -270,7 +286,7 @@ td[contenteditable="true"] {{
 <body>
 
 <div class="header">
-    <h2>📋 Base de datos eventos PRO</h2>
+    <h2>📋 BASE DE DATOS - EVENTOS -</h2>
     <div class="actions">
         <a href="/" style="padding:8px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;">⬅️ Inicio</a>
         <a href="/generar_contrato" style="padding:8px;background:#2563eb;color:white;border-radius:8px;text-decoration:none;">📝 Contrato</a>
@@ -304,8 +320,28 @@ td[contenteditable="true"] {{
     <div class="filter-group" style="flex-grow: 1.5;">
         <label>Ordenar por</label>
         <select name="ordenar_por">
-            <option value="fecha_evento" {"selected" if ordenar_por == "fecha_evento" else ""}>Fecha del evento</option>
-            <option value="id" {"selected" if ordenar_por == "id" else ""}>ID (Últimos creados)</option>
+
+            <option
+                value="id"
+                {"selected" if ordenar_por=="id" else ""}
+            >
+                Más recientes
+            </option>
+
+            <option
+                value="fecha_evento"
+                {"selected" if ordenar_por=="fecha_evento" else ""}
+            >
+                Fecha del evento
+            </option>
+
+            <option
+                value="fecha_registro"
+                {"selected" if ordenar_por=="fecha_registro" else ""}
+            >
+                Fecha de registro
+            </option>
+
         </select>
     </div>
 

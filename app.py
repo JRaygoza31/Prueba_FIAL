@@ -4,12 +4,13 @@ from models import db
 from models import db, Evento
 from formularios import formularios_bp
 import calendar
-from datetime import datetime
+from datetime import datetime, date
 from calendario import calendario_bp
 from clientes import clientes_bp
 from flask import session, request, redirect
 from functools import wraps
 from contratos import generar_contrato_bp
+
 
 
 
@@ -50,22 +51,12 @@ HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fiestas Increíbles</title>
 
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
-
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;}
 
         body{
             background:#f7f7fb;
@@ -91,26 +82,23 @@ HTML = """
             margin-bottom:10px;
         }
 
+        .logo a{
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+
         .logo img{
             width:180px;
             height:auto;
             object-fit:contain;
+            transition:.25s;
+            cursor:pointer;
         }
-        
-        .logo a{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
 
-.logo img{
-    transition:.25s;
-    cursor:pointer;
-}
-
-.logo img:hover{
-    transform:scale(1.05);
-}
+        .logo img:hover{
+            transform:scale(1.05);
+        }
 
         .subtitle{
             color:#777;
@@ -217,21 +205,10 @@ HTML = """
             margin-bottom:18px;
         }
 
-        .pink{
-            background:linear-gradient(135deg,#ff4f8b,#ff79a9);
-        }
-
-        .yellow{
-            background:linear-gradient(135deg,#ffb100,#ffd166);
-        }
-
-        .green{
-            background:linear-gradient(135deg,#22c55e,#54e39f);
-        }
-
-        .purple{
-            background:linear-gradient(135deg,#7c3aed,#9b6bff);
-        }
+        .pink{background:linear-gradient(135deg,#ff4f8b,#ff79a9);}
+        .yellow{background:linear-gradient(135deg,#ffb100,#ffd166);}
+        .green{background:linear-gradient(135deg,#22c55e,#54e39f);}
+        .purple{background:linear-gradient(135deg,#7c3aed,#9b6bff);}
 
         .stat-card h2{
             font-size:34px;
@@ -292,21 +269,6 @@ HTML = """
             color:#ff4f8b;
         }
 
-        .event.blue{
-            background:#d8ebff;
-            color:#3498ff;
-        }
-
-        .event.green{
-            background:#d6ffe8;
-            color:#22c55e;
-        }
-
-        .event.yellow{
-            background:#fff0c9;
-            color:#ffb100;
-        }
-
         .events-list{
             margin-top:20px;
         }
@@ -344,11 +306,6 @@ HTML = """
             color:#1ea85f;
         }
 
-        .pendiente{
-            background:#fff0c9;
-            color:#ff9900;
-        }
-
         .tasks{
             margin-top:18px;
         }
@@ -361,245 +318,159 @@ HTML = """
             border-bottom:1px solid #f2f2f2;
         }
 
-        .bottom-grid{
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:25px;
-            margin-top:25px;
-        }
-
-        .activity-item{
-            display:flex;
-            justify-content:space-between;
-            padding:14px 0;
-            border-bottom:1px solid #f2f2f2;
-        }
-
-        .chart-bars{
-            display:flex;
-            align-items:flex-end;
-            gap:14px;
-            height:220px;
-            margin-top:25px;
-        }
-
-        .bar-group{
-            display:flex;
-            gap:6px;
-            align-items:flex-end;
-        }
-
-        .bar{
-            width:18px;
-            border-radius:10px 10px 0 0;
-        }
-
-        .income{
-            background:#22c55e;
-        }
-
-        .expense{
-            background:#ff4f8b;
-        }
-
         @media(max-width:1200px){
-
-            .cards{
-                grid-template-columns:repeat(2,1fr);
-            }
-
-            .content-grid{
-                grid-template-columns:1fr;
-            }
-
-            .bottom-grid{
-                grid-template-columns:1fr;
-            }
+            .cards{grid-template-columns:repeat(2,1fr);}
+            .content-grid{grid-template-columns:1fr;}
         }
 
         @media(max-width:768px){
-
-            .sidebar{
-                display:none;
-            }
-
-            .main{
-                margin-left:0;
-            }
-
-            .cards{
-                grid-template-columns:1fr;
-            }
+            body{min-width:1200px;}
+            .sidebar{display:block;width:260px;}
+            .main{margin-left:260px;}
         }
-
     </style>
 </head>
+
 <body>
 
-    <!-- SIDEBAR -->
+<div class="sidebar">
 
-    <div class="sidebar">
+    <div class="logo">
+        <a href="https://vercatalogo.com/fial_shows/products/by-all/all" target="_blank">
+            <img src="{{ url_for('static', filename='fial_logo.png') }}" alt="Logo">
+        </a>
+    </div>
 
-        <div class="logo">
+    <div class="subtitle">
+        Eventos Infantiles
+    </div>
 
-    <a 
-        href="https://vercatalogo.com/fial_shows/products/by-all/all"
-        target="_blank"
-    >
+    <div class="menu">
 
-        <img
-            src="{{ url_for('static', filename='fial_logo.png') }}"
-            alt="Logo"
-        >
+        <a href="#" class="active">
+            <i class="bi bi-house-fill"></i>
+            Inicio
+        </a>
 
-    </a>
+        <a href="/calendario2">
+            <i class="bi bi-calendar3"></i>
+            Calendario
+        </a>
+
+        <a href="/clientes">
+            <i class="bi bi-people"></i>
+            Clientes
+        </a>
+
+        <a href="/nuevo_evento">
+            <i class="bi bi-file-earmark-text"></i>
+            Formularios
+        </a>
+
+        <a href="/generar_contrato">
+            <i class="bi bi-file-earmark-richtext"></i>
+            Contratos
+        </a>
+
+        <a href="#">
+            <i class="bi bi-bar-chart"></i>
+            Estadísticas
+        </a>
+
+        <a href="#">
+            <i class="bi bi-gear"></i>
+            Configuración
+        </a>
+
+    </div>
 
 </div>
 
-        <div class="subtitle">
-            Eventos Infantiles
+<div class="main">
+
+    <div class="topbar">
+
+        <div class="welcome">
+            <h1>
+                ¡Hola, {{nombre_usuario}}! 👋
+            </h1>
+            <p>Aquí tienes el resumen de tu día.</p>
         </div>
 
-        <div class="menu">
+        <div class="d-flex align-items-center gap-3">
 
-            <a href="#" class="active">
-                <i class="bi bi-house-fill"></i>
-                Inicio
-            </a>
+            <div class="search-box d-flex align-items-center gap-2">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Buscar...">
+            </div>
 
-            <a href="/calendario2">
-                <i class="bi bi-calendar3"></i>
-                Calendario
-            </a>
-                        
-            <a href="/clientes">
-                <i class="bi bi-people"></i>
-                Clientes
-            </a>
-
-            <a href="/nuevo_evento">
-                <i class="bi bi-file-earmark-text"></i>
-                Formularios
-            </a>
-
-            <a href="/generar_contrato">
-                <i class="bi bi-file-earmark-richtext"></i>
-                Contratos
-            </a>
-
-            <a href="#">
-                <i class="bi bi-bar-chart"></i>
-                Estadísticas
-            </a>
-
-            <a href="#">
-                <i class="bi bi-gear"></i>
-                Configuración
-            </a>
+            <button class="new-btn">
+                + Nueva Reserva
+            </button>
 
         </div>
 
     </div>
 
-    <!-- MAIN -->
-
-    <div class="main">
-
-        <div class="topbar">
-
-            <div class="welcome">
-                <h1>
-                    ¡Hola, {{nombre_usuario}}! 👋
-                </h1>
-                <p>Aquí tienes el resumen de tu negocio.</p>
-            </div>
-
-            <div class="d-flex align-items-center gap-3">
-
-                <div class="search-box d-flex align-items-center gap-2">
-                    <i class="bi bi-search"></i>
-                    <input type="text" placeholder="Buscar...">
-                </div>
-
-                <button class="new-btn">
-                    + Nueva Reserva
-                </button>
-
-            </div>
-
-        </div>
-
-        <!-- CARDS -->
+    <!-- CARDS -->
 
         <div class="cards">
 
-            <div class="stat-card">
-
-                <div class="icon-box pink">
-                    <i class="bi bi-calendar-event"></i>
-                </div>
-
-                <h2>18</h2>
-                <p>Eventos este mes</p>
-
+        <div class="stat-card">
+            <div class="icon-box pink">
+                <i class="bi bi-calendar-event"></i>
             </div>
 
-            <div class="stat-card">
-
-                <div class="icon-box yellow">
-                    <i class="bi bi-cash-coin"></i>
-                </div>
-
-                <h2>$85,400</h2>
-                <p>Ingresos del mes</p>
-
-            </div>
-
-            <div class="stat-card">
-
-                <div class="icon-box green">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-
-                <h2>32</h2>
-                <p>Reservas confirmadas</p>
-
-            </div>
-
-            <div class="stat-card">
-
-                <div class="icon-box purple">
-                    <i class="bi bi-clipboard-check"></i>
-                </div>
-
-                <h2>6</h2>
-                <p>Formularios pendientes</p>
-
-            </div>
-
+            <h2>{{ eventos_totales }}</h2>
+            <p>Eventos Totales</p>
         </div>
 
-        <!-- CONTENT -->
+        <div class="stat-card">
+            <div class="icon-box green">
+                <i class="bi bi-calendar-check"></i>
+            </div>
 
-        <div class="content-grid">
+            <h2>{{ eventos_mes }}</h2>
+            <p>Eventos del Mes</p>
+        </div>
 
-            <!-- CALENDAR -->
+        <div class="stat-card">
+            <div class="icon-box yellow">
+                <i class="bi bi-calendar-heart"></i>
+            </div>
 
-            <div class="calendar-card">
+            <h2>{{ cantidad_eventos_hoy }}</h2>
+            <p>Eventos para Hoy</p>
+        </div>
 
-                <div class="d-flex justify-content-between align-items-center">
+        <div class="stat-card">
+            <div class="icon-box purple">
+                <i class="bi bi-file-earmark-richtext"></i>
+            </div>
 
-                    <h3 class="fw-bold">
-                        Calendario de Eventos
-                    </h3>
+            <h2>{{ contratos_pendientes }}</h2>
+            <p>Contratos por Generar</p>
+        </div>
 
-                    <button class="btn btn-light rounded-pill">
-                        Mayo 2026
-                    </button>
+    </div>
 
-                </div>
+    <!-- CONTENT -->
 
-                <div class="calendar-grid">
+    <div class="content-grid">
+
+        <div class="calendar-card">
+
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="fw-bold">
+                    Calendario de Eventos
+                </h3>
+
+                <button class="btn btn-light rounded-pill">
+                    {{ mes }} {{ anio }}
+                </button>
+            </div>
+
+            <div class="calendar-grid">
 
                 {% for dia in dias %}
 
@@ -610,9 +481,7 @@ HTML = """
                         {% for evento in dia.eventos %}
 
                             <div class="event pink">
-
                                 {{ evento.nombre_festejado }}
-
                             </div>
 
                         {% endfor %}
@@ -621,94 +490,85 @@ HTML = """
 
                 {% endfor %}
 
-                </div>
-                                
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-column gap-4">
+
+            <div class="side-card">
+
+                <h4 class="fw-bold mb-4">
+                    Eventos de hoy
+                </h4>
+
+                <div class="events-list">
+
+                    {% if eventos_hoy %}
+
+                        {% for evento in eventos_hoy %}
+
+                            <div class="event-item">
+
+                                <div class="event-left">
+
+                                    <div class="avatar"></div>
+
+                                    <div>
+                                        <strong>{{ evento.nombre_festejado }}</strong><br>
+                                        <small>
+                                            {{ evento.horario_show }} · {{ evento.tematica or evento.tipo_fiesta }}
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <span class="badge-custom confirmado">
+                                    Hoy
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <p style="color:#777;">
+                            No hay eventos registrados para hoy.
+                        </p>
+
+                    {% endif %}
+
                 </div>
 
             </div>
 
-            <!-- SIDE -->
+            <div class="side-card">
 
-            <div class="d-flex flex-column gap-4">
+                <h4 class="fw-bold mb-3">
+                    Tareas Pendientes
+                </h4>
 
-                <!-- EVENTS -->
+                <div class="tasks">
 
-                <div class="side-card">
+                    {% if tareas_pendientes %}
 
-                    <h4 class="fw-bold mb-4">
-                        Próximos Eventos
-                    </h4>
+                        {% for tarea in tareas_pendientes %}
 
-                    <div class="events-list">
-
-                        <div class="event-item">
-
-                            <div class="event-left">
-
-                                <div class="avatar"></div>
-
-                                <div>
-                                    <strong>Cumpleaños Sofía</strong><br>
-                                    <small>Sábado 25 Mayo</small>
-                                </div>
-
+                            <div class="task">
+                                <input type="checkbox">
+                                <span>{{ tarea }}</span>
                             </div>
 
-                            <span class="badge-custom confirmado">
-                                Confirmado
-                            </span>
+                        {% endfor %}
 
-                        </div>
-
-                        <div class="event-item">
-
-                            <div class="event-left">
-
-                                <div class="avatar"></div>
-
-                                <div>
-                                    <strong>Fiesta Infantil</strong><br>
-                                    <small>25 Mayo</small>
-                                </div>
-
-                            </div>
-
-                            <span class="badge-custom pendiente">
-                                Pendiente
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <!-- TASKS -->
-
-                <div class="side-card">
-
-                    <h4 class="fw-bold mb-3">
-                        Tareas Pendientes
-                    </h4>
-
-                    <div class="tasks">
+                    {% else %}
 
                         <div class="task">
-                            <input type="checkbox">
-                            <span>Enviar contrato - Sofía</span>
+                            <span>Todo en orden por ahora ✅</span>
                         </div>
 
-                        <div class="task">
-                            <input type="checkbox">
-                            <span>Confirmar pago</span>
-                        </div>
-
-                        <div class="task">
-                            <input type="checkbox">
-                            <span>Preparar decoración</span>
-                        </div>
-
-                    </div>
+                    {% endif %}
 
                 </div>
 
@@ -716,8 +576,9 @@ HTML = """
 
         </div>
 
-
     </div>
+
+</div>
 
 </body>
 </html>
@@ -738,6 +599,8 @@ USUARIOS = {
 }
 
 
+##### LOGIN 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -751,39 +614,189 @@ def login():
             and
             USUARIOS[usuario]["password"] == password
         ):
-
             session["logueado"] = True
-
-            session["nombre"] = (
-                USUARIOS[usuario]["nombre"]
-            )
-
+            session["nombre"] = USUARIOS[usuario]["nombre"]
             return redirect("/")
 
-        return "Usuario o contraseña incorrectos"
+        error = "Usuario o contraseña incorrectos"
 
-    return """
+    else:
+        error = ""
+
+    return render_template_string("""
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Login FIAL</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    min-height:100vh;
+    font-family:'Poppins',sans-serif;
+    background:
+        linear-gradient(
+            rgba(29,39,95,.45),
+            rgba(255,79,139,.35)
+        ),
+        url("{{ url_for('static', filename='fondo_login.jpg') }}");
+    background-size:cover;
+    background-position:center;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:30px;
+}
+
+.login-card{
+    width:100%;
+    max-width:430px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(12px);
+    border-radius:32px;
+    padding:45px;
+    box-shadow:0 20px 50px rgba(0,0,0,.18);
+    text-align:center;
+}
+
+.logo{
+    width:150px;
+    margin-bottom:20px;
+}
+
+h1{
+    color:#1d275f;
+    font-size:34px;
+    margin-bottom:8px;
+}
+
+p{
+    color:#777;
+    margin-bottom:30px;
+}
+
+.input-group{
+    text-align:left;
+    margin-bottom:18px;
+}
+
+label{
+    display:block;
+    font-weight:600;
+    color:#444;
+    margin-bottom:8px;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    border-radius:16px;
+    border:1px solid #ddd;
+    font-size:15px;
+    outline:none;
+}
+
+input:focus{
+    border-color:#ff4f8b;
+    box-shadow:0 0 0 4px rgba(255,79,139,.15);
+}
+
+button{
+    width:100%;
+    border:none;
+    margin-top:10px;
+    padding:16px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#ff4f8b,#ff7eb3);
+    color:white;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 25px rgba(255,79,139,.35);
+}
+
+.error{
+    color:#dc2626;
+    font-weight:600;
+    margin-bottom:15px;
+}
+
+.footer{
+    margin-top:25px;
+    font-size:13px;
+    color:#777;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <img
+        src="{{ url_for('static', filename='fial_logo.png') }}"
+        class="logo"
+    >
+
+    <h1>BIENVENIDO</h1>
+
+    <p></p>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
     <form method="POST">
-        <h2>Login</h2>
 
-        <input
-            name="usuario"
-            placeholder="Usuario"
-        >
+        <div class="input-group">
+            <label>Usuario</label>
+            <input
+                name="usuario"
+                placeholder=""
+                required
+            >
+        </div>
 
-        <input
-            name="password"
-            type="password"
-            placeholder="Contraseña"
-        >
+        <div class="input-group">
+            <label>Contraseña</label>
+            <input
+                name="password"
+                type="password"
+                placeholder="Tu contraseña"
+                required
+            >
+        </div>
 
-        <button>
+        <button type="submit">
             Entrar
         </button>
 
     </form>
-    """
 
+    <div class="footer">
+        Sistema interno de eventos 🎉
+    </div>
+
+</div>
+
+</body>
+</html>
+""", error=error)
 
 @app.route("/logout")
 def logout():
@@ -840,32 +853,95 @@ def proteger_rutas():
 @app.route("/")
 def home():
 
+    nombre_usuario = session.get(
+        "nombre",
+        "Invitado"
+    )
 
     hoy = datetime.now()
 
     anio = hoy.year
     mes = hoy.month
 
+    # =====================================================
+    # EVENTOS DEL MES
+    # =====================================================
+
     eventos = Evento.query.filter(
-        db.extract('month', Evento.fecha_evento) == mes,
-        db.extract('year', Evento.fecha_evento) == anio
+        db.extract("month", Evento.fecha_evento) == mes,
+        db.extract("year", Evento.fecha_evento) == anio
     ).all()
 
+    # =====================================================
+    # KPIs
+    # =====================================================
 
-    nombre_usuario = session.get(
-        "nombre",
-        "Invitado"
+    eventos_totales = Evento.query.count()
+
+    eventos_mes = len(eventos)
+
+    eventos_hoy = [
+        e for e in eventos
+        if e.fecha_evento == hoy.date()
+    ]
+
+    cantidad_eventos_hoy = len(
+        eventos_hoy
     )
 
-    # ==========================
-    # GENERAR DIAS DEL MES
-    # ==========================
+    contratos_pendientes = Evento.query.filter_by(
+        contrato_generado=False
+    ).count()
 
-    total_dias = calendar.monthrange(anio, mes)[1]
+    # =====================================================
+    # TAREAS PENDIENTES
+    # =====================================================
+
+    tareas_pendientes = []
+
+    for e in eventos:
+
+        if not e.folio_cliente:
+
+            tareas_pendientes.append(
+                f"Asignar folio a {e.nombre_festejado}"
+            )
+
+        if e.restante > 0:
+
+            tareas_pendientes.append(
+                f"Cobrar restante de {e.nombre_festejado}"
+            )
+
+        if not e.imagen_anticipo:
+
+            tareas_pendientes.append(
+                f"Subir comprobante de {e.nombre_festejado}"
+            )
+
+        if not e.contrato_generado:
+
+            tareas_pendientes.append(
+                f"Generar contrato de {e.nombre_festejado}"
+            )
+
+    tareas_pendientes = tareas_pendientes[:5]
+
+    # =====================================================
+    # CALENDARIO
+    # =====================================================
+
+    total_dias = calendar.monthrange(
+        anio,
+        mes
+    )[1]
 
     dias = []
 
-    for numero_dia in range(1, total_dias + 1):
+    for numero_dia in range(
+        1,
+        total_dias + 1
+    ):
 
         eventos_del_dia = []
 
@@ -873,19 +949,46 @@ def home():
 
             if evento.fecha_evento.day == numero_dia:
 
-                eventos_del_dia.append(evento)
+                eventos_del_dia.append(
+                    evento
+                )
 
         dias.append({
+
             "numero": numero_dia,
+
             "eventos": eventos_del_dia
+
         })
 
+    # =====================================================
+    # RENDER
+    # =====================================================
+
     return render_template_string(
+
         HTML,
+
         dias=dias,
+
         mes=hoy.strftime("%B"),
+
         anio=anio,
-        nombre_usuario=nombre_usuario
+
+        nombre_usuario=nombre_usuario,
+
+        eventos_totales=eventos_totales,
+
+        eventos_mes=eventos_mes,
+
+        eventos_hoy=eventos_hoy,
+
+        cantidad_eventos_hoy=cantidad_eventos_hoy,
+
+        contratos_pendientes=contratos_pendientes,
+
+        tareas_pendientes=tareas_pendientes
+
     )
 
 with app.app_context():
